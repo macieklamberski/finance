@@ -1,0 +1,6 @@
+.DS_Store
+Thumbs.db
+/vendor
+/deploy.sh
+/website/pages/*
+!/website/pages/index.json
