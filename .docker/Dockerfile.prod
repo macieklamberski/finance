@@ -1,25 +1,26 @@
 FROM php:8.3-apache
 WORKDIR /var/www
 
-# Install necessary system dependencies.
+# Install the required system dependencies.
 RUN apt-get update && apt-get install -y unzip cron
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Enable mod_rewrite.
 RUN a2enmod rewrite
-RUN sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
+RUN sed -i "s/AllowOverride None/AllowOverride All/" /etc/apache2/apache2.conf
 
 # Setup Crontab.
-RUN echo "0 * * * * /usr/local/bin/php /var/www/crawler/index.php >> /var/log/cron.log 2>&1" > /etc/cron.d/crawler-cron
-RUN chmod 0644 /etc/cron.d/crawler-cron
-RUN crontab /etc/cron.d/crawler-cron
+RUN echo "0 * * * * /usr/local/bin/php /var/www/crawler/index.php >> /var/log/cron.log 2>&1" > /etc/crontab
+RUN crontab /etc/crontab
 
 # Install dependencies.
-COPY --chown=www-data:www-data composer.* .
+COPY composer.* .
 RUN composer install --no-dev --optimize-autoloader
 
-COPY --chown=www-data:www-data . .
+# Copy the project's contents to the container.
+COPY . .
 RUN rm -rf /var/www/html && ln -s /var/www/website/public /var/www/html
 
+# Run main container commands.
 EXPOSE 80
 CMD ["sh", "-c", "service cron start && apache2-foreground"]
